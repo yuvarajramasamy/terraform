@@ -199,6 +199,14 @@ func resourceAwsRDSCluster() *schema.Resource {
 				ValidateFunc: validateArn,
 			},
 
+			"iam_roles": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
+
 			"tags": tagsSchema(),
 		},
 	}
@@ -358,8 +366,7 @@ func resourceAwsRDSClusterCreate(d *schema.ResourceData, meta interface{}) error
 
 	log.Printf("[INFO] RDS Cluster ID: %s", d.Id())
 
-	log.Println(
-		"[INFO] Waiting for RDS Cluster to be available")
+	log.Println("[INFO] Waiting for RDS Cluster to be available")
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"creating", "backing-up", "modifying"},
@@ -373,6 +380,15 @@ func resourceAwsRDSClusterCreate(d *schema.ResourceData, meta interface{}) error
 	_, err := stateConf.WaitForState()
 	if err != nil {
 		return fmt.Errorf("[WARN] Error waiting for RDS Cluster state to be \"available\": %s", err)
+	}
+
+	if v, ok := d.GetOk("iam_roles"); ok {
+		for _, role := range v.(*schema.Set).List() {
+			err := setIamRoleToRdsCluster(d.Id(), role.(string), conn)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return resourceAwsRDSClusterRead(d, meta)
@@ -616,4 +632,30 @@ func buildRDSClusterARN(identifier, partition, accountid, region string) (string
 	arn := fmt.Sprintf("arn:%s:rds:%s:%s:cluster:%s", partition, region, accountid, identifier)
 	return arn, nil
 
+}
+
+func removeIamRoleToRdsCluster(clusterIdentifier string, roleArn string, conn *rds.RDS) error {
+	params := &rds.RemoveRoleFromDBClusterInput{
+		DBClusterIdentifier: aws.String(clusterIdentifier),
+		RoleArn:             aws.String(roleArn),
+	}
+	_, err := conn.RemoveRoleFromDBCluster(params)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setIamRoleToRdsCluster(clusterIdentifier string, roleArn string, conn *rds.RDS) error {
+	params := &rds.AddRoleToDBClusterInput{
+		DBClusterIdentifier: aws.String(clusterIdentifier),
+		RoleArn:             aws.String(roleArn),
+	}
+	_, err := conn.AddRoleToDBCluster(params)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

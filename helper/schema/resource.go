@@ -3,6 +3,7 @@ package schema
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/hashicorp/terraform/terraform"
@@ -94,6 +95,15 @@ type Resource struct {
 	// This is a private interface for now, for use by DataSourceResourceShim,
 	// and not for general use. (But maybe later...)
 	deprecationMessage string
+
+	// Timeouts allow users to specify specific time durations in which an
+	// operation should time out, to allow them to extend an action to suit their
+	// usage. For example, a user may specify a large Creation timeout for their
+	// AWS RDS Instance due to it's size, or restoring from a snapshot.
+	// Resource implementors must enable Timeout support by adding the allowed
+	// actions (Create, Read, Update, Delete, Default) to the Resource struct, and
+	// accessing them in the matching methods.
+	Timeouts *resourceTimeout
 }
 
 // See Resource documentation.
@@ -176,6 +186,12 @@ func (r *Resource) Apply(
 func (r *Resource) Diff(
 	s *terraform.InstanceState,
 	c *terraform.ResourceConfig) (*terraform.InstanceDiff, error) {
+	// log.Printf("\n@@@\nConfig: \n%s\n@@@\n", spew.Sdump(c))
+
+	for k, v := range c.Config {
+		log.Printf("\n\t@@@%s) - %#v", k, v)
+	}
+
 	return schemaMap(r.Schema).Diff(s, c)
 }
 

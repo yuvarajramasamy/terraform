@@ -33,16 +33,8 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 		// type assertion
 		// rnt := raw.(ResourceTimeout)
 		// t = &rnt
-		t = raw.(*ResourceTimeout)
+		*t = *raw.(*ResourceTimeout)
 	}
-
-	// if s.Timeouts != nil {
-	// 	t.Create = s.Timeouts.Create
-	// 	t.Update = s.Timeouts.Create
-	// 	t.Read = s.Timeouts.Create
-	// 	t.Delete = s.Timeouts.Create
-	// 	t.Default = s.Timeouts.Create
-	// }
 
 	log.Printf("what is T now: %s", spew.Sdump(t))
 
@@ -71,64 +63,82 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					return fmt.Errorf("Unsupported timeout key found (%s)", mk)
 				}
 
-				if mk == "create" && t.Create == nil {
-					return fmt.Errorf("Timeout (%s) is not supported", mk)
+				log.Printf("\n***MK: %s\n***t: %#v", mk, t)
+
+				if t.Delete == nil {
+					log.Printf("\n***\nt delete is nil\n***\n")
 				} else {
-					log.Printf("\n***\nOverwrote (%s)", mk)
-					rt, err := time.ParseDuration(mv.(string))
-					if err != nil {
-						return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
-					}
-					t.Create = &rt
-					continue
+					log.Printf("\n***\nt delete is not nil\n***\n")
 				}
 
-				if mk == "read" && t.Read == nil {
-					return fmt.Errorf("Timeout (%s) is not supported", mk)
-				} else {
-					log.Printf("\n***\nOverwrote (%s)", mk)
-					rt, err := time.ParseDuration(mv.(string))
-					if err != nil {
-						return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+				if mk == "create" {
+					if t.Create == nil {
+						return fmt.Errorf("Timeout (%s) is not supported", mk)
+					} else {
+						log.Printf("\n***\nOverwrote (%s)", mk)
+						rt, err := time.ParseDuration(mv.(string))
+						if err != nil {
+							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+						}
+						t.Create = &rt
+						continue
 					}
-					t.Read = &rt
-					continue
 				}
 
-				if mk == "update" && t.Update == nil {
-					return fmt.Errorf("Timeout (%s) is not supported", mk)
-				} else {
-					log.Printf("\n***\nOverwrote (%s)", mk)
-					rt, err := time.ParseDuration(mv.(string))
-					if err != nil {
-						return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+				if mk == "read" {
+					if t.Read == nil {
+						return fmt.Errorf("Timeout (%s) is not supported", mk)
+					} else {
+						log.Printf("\n***\nOverwrote (%s)", mk)
+						rt, err := time.ParseDuration(mv.(string))
+						if err != nil {
+							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+						}
+						t.Read = &rt
+						continue
 					}
-					t.Update = &rt
-					continue
 				}
 
-				if mk == "delete" && t.Delete == nil {
-					return fmt.Errorf("Timeout (%s) is not supported", mk)
-				} else {
-					log.Printf("\n***\nOverwrote (%s)", mk)
-					rt, err := time.ParseDuration(mv.(string))
-					if err != nil {
-						return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+				if mk == "update" {
+					if t.Update == nil {
+						return fmt.Errorf("Timeout (%s) is not supported", mk)
+					} else {
+						log.Printf("\n***\nOverwrote (%s)", mk)
+						rt, err := time.ParseDuration(mv.(string))
+						if err != nil {
+							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+						}
+						t.Update = &rt
+						continue
 					}
-					t.Delete = &rt
-					continue
 				}
 
-				if mk == "default" && t.Default == nil {
-					return fmt.Errorf("Timeout (%s) is not supported", mk)
-				} else {
-					log.Printf("\n***\nOverwrote (%s)", mk)
-					rt, err := time.ParseDuration(mv.(string))
-					if err != nil {
-						return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+				if mk == "delete" {
+					if t.Delete == nil {
+						return fmt.Errorf("Timeout (%s) is not supported", mk)
+					} else {
+						log.Printf("\n***\nOverwrote (%s)", mk)
+						rt, err := time.ParseDuration(mv.(string))
+						if err != nil {
+							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+						}
+						t.Delete = &rt
+						continue
 					}
-					t.Default = &rt
-					continue
+				}
+
+				if mk == "default" {
+					if t.Default == nil {
+						return fmt.Errorf("Timeout (%s) is not supported", mk)
+					} else {
+						log.Printf("\n***\nOverwrote (%s)", mk)
+						rt, err := time.ParseDuration(mv.(string))
+						if err != nil {
+							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
+						}
+						t.Default = &rt
+						continue
+					}
 				}
 			}
 		}

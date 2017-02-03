@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/terraform"
 )
 
@@ -192,8 +193,11 @@ func (r *Resource) Diff(
 		log.Printf("\n\t@@@%s) - %#v", k, v)
 	}
 
-	t := ResourceTimeout{}
+	t := &ResourceTimeout{}
+	log.Printf("\n@@@\nT before config decode:\n%s\n@@@\n", spew.Sdump(t))
 	err := t.ConfigDecode(r, c)
+
+	log.Printf("\n@@@\nT after config decode:\n%s\n@@@\n", spew.Sdump(t))
 
 	if err != nil {
 		log.Printf("\n@@@\n[ERR] Error decoding timeout schema: %s", err)

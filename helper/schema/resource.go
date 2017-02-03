@@ -103,7 +103,7 @@ type Resource struct {
 	// Resource implementors must enable Timeout support by adding the allowed
 	// actions (Create, Read, Update, Delete, Default) to the Resource struct, and
 	// accessing them in the matching methods.
-	Timeouts *resourceTimeout
+	Timeouts *ResourceTimeout
 }
 
 // See Resource documentation.
@@ -190,6 +190,14 @@ func (r *Resource) Diff(
 
 	for k, v := range c.Config {
 		log.Printf("\n\t@@@%s) - %#v", k, v)
+	}
+
+	t := ResourceTimeout{}
+	err := t.ConfigDecode(r, c)
+
+	if err != nil {
+		log.Printf("\n@@@\n[ERR] Error decoding timeout schema: %s", err)
+		return nil, fmt.Errorf("[ERR] Error decoding timeout: %s", err)
 	}
 
 	return schemaMap(r.Schema).Diff(s, c)

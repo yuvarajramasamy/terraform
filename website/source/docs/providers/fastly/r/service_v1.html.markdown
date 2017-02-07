@@ -150,6 +150,8 @@ order to destroy the Service, set `force_destroy` to `true`. Default `false`.
 * `request_setting` - (Optional) A set of Request modifiers. Defined below
 * `s3logging` - (Optional) A set of S3 Buckets to send streaming logs too.
 Defined below.
+* `papertrail` - (Optional) A Papertrail endpoint to send streaming logs too.
+Defined below.
 * `vcl` - (Optional) A set of custom VCL configuration blocks. The
 ability to upload custom VCL code is not enabled by default for new Fastly
 accounts (see the [Fastly documentation](https://docs.fastly.com/guides/vcl/uploading-custom-vcl) for details).
@@ -174,7 +176,7 @@ Default `1000`
 * `max_conn` - (Optional) Maximum number of connections for this Backend.
 Default `200`.
 * `port` - (Optional) The port number on which the Backend responds. Default `80`.
-* `request_condition` - (Optional, string) Condition, which if met, will select this backend during a request. 
+* `request_condition` - (Optional, string) Condition, which if met, will select this backend during a request.
 * `ssl_check_cert` - (Optional) Be strict about checking SSL certs. Default `true`.
 * `ssl_hostname` - (Optional) Used for both SNI during the TLS handshake and to validate the cert.
 * `shield` - (Optional) The POP of the shield designated to reduce inbound load.
@@ -229,6 +231,20 @@ content. (Does not apply to the `delete` action.)
 * `substitution` - (Optional) Value to substitute in place of regular expression. (Only applies to the `regex` and `regex_repeat` actions.)
 * `priority` - (Optional) Lower priorities execute first. Default: `100`.
 
+The `healthcheck` block supports:
+
+* `name` - (Required) A unique name to identify this Healthcheck.
+* `host` - (Required) Address of the host to check.
+* `path` - (Required) The path to check.
+* `check_interval` - (Optional) How often to run the Healthcheck in milliseconds. Default `5000`.
+* `expected_response` - (Optional) The status code expected from the host. Default `200`.
+* `http_version` - (Optional) Whether to use version 1.0 or 1.1 HTTP. Default `1.1`.
+* `initial` - (Optional) When loading a config, the initial number of probes to be seen as OK. Default `2`.
+* `method` - (Optional) Which HTTP method to use. Default `HEAD`.
+* `threshold` - (Optional) How many Healthchecks must succeed to be considered healthy. Default `3`.
+* `timeout` - (Optional) Timeout in milliseconds. Default `500`.
+* `window` - (Optional) The number of most recent Healthcheck queries to keep for this Healthcheck. Default `5`.
+
 The `request_setting` block allow you to customize Fastly's request handling, by
 defining behavior that should change based on a predefined `condition`:
 
@@ -282,6 +298,16 @@ compressed. Default `0`.
 Request Setting should be applied. For detailed information about Conditionals,
 see [Fastly's Documentation on Conditionals][fastly-conditionals].
 
+The `papertrail` block supports:
+
+* `name` - (Required) A unique name to identify this Papertrail endpoint.
+* `address` - (Required) The address of the Papertrail endpoint.
+* `port` - (Required) The port associated with the address where the Papertrail endpoint can be accessed.
+* `format` - (Optional) Apache-style string or VCL variables to use for log formatting. Defaults to Apache Common Log format (`%h %l %u %t %r %>s`)
+* `request_condition` - (Optional) The VCL request condition to check if this
+Request Setting should be applied. For detailed information about Conditionals,
+see [Fastly's Documentation on Conditionals][fastly-conditionals].
+
 The `vcl` block supports:
 
 * `name` - (Required) A unique name for this configuration block.
@@ -302,6 +328,7 @@ Service.
 * `backend` – Set of Backends. See above for details.
 * `header` – Set of Headers. See above for details.
 * `s3logging` – Set of S3 Logging configurations. See above for details.
+* `papertrail` – Set of Papertrail configurations. See above for details.
 * `vcl` – Set of custom VCL configurations. See above for details.
 * `default_host` – Default host specified.
 * `default_ttl` - Default TTL.

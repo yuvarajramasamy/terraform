@@ -10,6 +10,8 @@ import (
 	"github.com/mitchellh/copystructure"
 )
 
+const TimeoutKey = "e2bfb730-ecaa-11e6-8f88-34363bc7c4c0"
+
 func DefaultTimeout(tx time.Duration) *time.Duration {
 	return &tx
 }
@@ -30,9 +32,6 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 		if cerr != nil {
 			log.Printf("\n@@@\nError with deep copy: %s\n@@@\n", cerr)
 		}
-		// type assertion
-		// rnt := raw.(ResourceTimeout)
-		// t = &rnt
 		*t = *raw.(*ResourceTimeout)
 	}
 
@@ -40,10 +39,8 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 
 	if v, ok := c.Config["timeout"]; ok {
 		raw := v.([]map[string]interface{})
-		// raw is []map[string]interface{}
 		for _, tv := range raw {
 			log.Printf("\n***\n rawT %s", spew.Sdump(tv))
-			// rawT := tv.(map[string]interface{})
 			for mk, mv := range tv {
 				log.Printf("\n$$$$ inner kv: %s // %s", mk, mv.(string))
 				keys := []string{"create", "read", "update", "delete", "default"}
@@ -64,12 +61,6 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 				}
 
 				log.Printf("\n***MK: %s\n***t: %#v", mk, t)
-
-				if t.Delete == nil {
-					log.Printf("\n***\nt delete is nil\n***\n")
-				} else {
-					log.Printf("\n***\nt delete is not nil\n***\n")
-				}
 
 				if mk == "create" {
 					if t.Create == nil {
@@ -150,8 +141,34 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 // MetaEncode and MetaDecode are analogous to the Go stdlib JSONEncoder
 // interface: they encode/decode a timeouts struct from an instance diff, which is
 // where the timeout data is stored after a diff to pass into Apply.
-//
-// MetaEncode called in Step #2
-// MetaDecode called in Step #4
-func (t *ResourceTimeout) MetaEncode(*terraform.InstanceDiff) error { return nil }
+func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
+	m := make(map[string]interface{})
+
+	if t.Create != nil {
+		m["create"] = t.Create.Nanoseconds()
+	}
+	if t.Read != nil {
+		m["read"] = t.Read.Nanoseconds()
+	}
+	if t.Update != nil {
+		m["update"] = t.Update.Nanoseconds()
+	}
+	if t.Delete != nil {
+		m["delete"] = t.Delete.Nanoseconds()
+	}
+	if t.Default != nil {
+		m["default"] = t.Default.Nanoseconds()
+	}
+
+	if len(m) > 0 {
+		if id.Meta == nil {
+			id.Meta = make(map[string]interface{})
+		}
+
+		id.Meta[TimeoutKey] = m
+	}
+
+	return nil
+}
+
 func (t *ResourceTimeout) MetaDecode(*terraform.InstanceDiff) error { return nil }

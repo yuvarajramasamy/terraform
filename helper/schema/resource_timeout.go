@@ -158,6 +158,14 @@ func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
 	}
 	if t.Default != nil {
 		m["default"] = t.Default.Nanoseconds()
+		// for any key above that is nil, if default is specified, we need to
+		// populate it with the default
+		keys := []string{"create", "update", "read", "delete"}
+		for _, k := range keys {
+			if _, ok := m[k]; !ok {
+				m[k] = t.Default.Nanoseconds()
+			}
+		}
 	}
 
 	if len(m) > 0 {
@@ -165,6 +173,7 @@ func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
 			id.Meta = make(map[string]interface{})
 		}
 
+		// only add the Timeout to the Meta if we have values
 		id.Meta[TimeoutKey] = m
 	}
 

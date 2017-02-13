@@ -97,15 +97,34 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 	// 		Update: DefaultTimeout(5 * time.Minute),
 	// 	},
 	// }
-	rt := &ResourceTimeout{
-		Create: DefaultTimeout(10 * time.Minute),
-		Update: DefaultTimeout(5 * time.Minute),
+	// rt := &ResourceTimeout{
+	// 	Create: DefaultTimeout(10 * time.Minute),
+	// 	Update: DefaultTimeout(5 * time.Minute),
+	// }
+
+	// rt2 := &ResourceTimeout{
+	// 	Create:  DefaultTimeout(10 * time.Minute),
+	// 	Default: DefaultTimeout(7 * time.Minute),
+	// }
+
+	e1 := map[string]interface{}{
+		"create": int64(600000000000),
+		"update": int64(300000000000),
 	}
 
-	d := &terraform.InstanceDiff{}
+	e2 := map[string]interface{}{
+		"create":  int64(600000000000),
+		"update":  int64(420000000000),
+		"read":    int64(420000000000),
+		"delete":  int64(420000000000),
+		"default": int64(420000000000),
+	}
 
 	expected := map[string]interface{}{
-		TimeoutKey: nil,
+		TimeoutKey: e1,
+	}
+	expected2 := map[string]interface{}{
+		TimeoutKey: e2,
 	}
 
 	cases := []struct {
@@ -114,10 +133,25 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 		Expected  map[string]interface{}
 		ShouldErr bool
 	}{
+		// Two fields
 		{
-			Timeout:   rt,
-			State:     d,
+			Timeout:   timeoutForValues(10, 0, 5, 0, 0),
+			State:     &terraform.InstanceDiff{},
 			Expected:  expected,
+			ShouldErr: false,
+		},
+		// Two fields, one is Default
+		{
+			Timeout:   timeoutForValues(10, 0, 0, 0, 7),
+			State:     &terraform.InstanceDiff{},
+			Expected:  expected2,
+			ShouldErr: false,
+		},
+		// No fields
+		{
+			Timeout:   &ResourceTimeout{},
+			State:     &terraform.InstanceDiff{},
+			Expected:  nil,
 			ShouldErr: false,
 		},
 	}
@@ -129,12 +163,33 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 			t.Fatalf("Error, expected:\n%#v\n got:\n%#v\n", c.Expected, c.State.Meta)
 		}
 
+		// should maybe just compare [TimeoutKey] but for now we're assuming only
+		// that in Meta
 		if !reflect.DeepEqual(c.State.Meta, c.Expected) {
-			t.Fatalf("Deep equal not equal")
-		} else {
-			log.Printf("things look good")
+			t.Fatalf("Encode not equal, expected:\n%#v\n\ngot:\n%#v\n", c.Expected, c.State.Meta)
 		}
 	}
+}
 
-	t.Fatalf("\n@@@\n\nFall through\n\n@@@\n")
+func timeoutForValues(create, read, update, del, def int) *ResourceTimeout {
+	rt := ResourceTimeout{}
+
+	if create != 0 {
+		rt.Create = DefaultTimeout(time.Duration(create) * time.Minute)
+	}
+	if read != 0 {
+		rt.Read = DefaultTimeout(time.Duration(read) * time.Minute)
+	}
+	if update != 0 {
+		rt.Update = DefaultTimeout(time.Duration(update) * time.Minute)
+	}
+	if del != 0 {
+		rt.Delete = DefaultTimeout(time.Duration(del) * time.Minute)
+	}
+
+	if def != 0 {
+		rt.Default = DefaultTimeout(time.Duration(def) * time.Minute)
+	}
+
+	return &rt
 }

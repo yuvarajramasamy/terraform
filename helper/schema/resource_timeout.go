@@ -184,4 +184,17 @@ func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
 	return nil
 }
 
-func (t *ResourceTimeout) MetaDecode(*terraform.InstanceDiff) error { return nil }
+func (t *ResourceTimeout) MetaDecode(id *terraform.InstanceDiff) error {
+	if len(id.Meta) == 0 {
+		return nil
+	}
+
+	times, ok := id.Meta[TimeoutKey]
+	if !ok {
+		return nil
+	}
+
+	log.Printf("\n@@@\nDEBUG times:\n%s\n@@@\n", spew.Sdump(times))
+
+	return nil
+}

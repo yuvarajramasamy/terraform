@@ -12,6 +12,10 @@ import (
 
 const TimeoutKey = "e2bfb730-ecaa-11e6-8f88-34363bc7c4c0"
 
+func timeKeys() []string {
+	return []string{"create", "read", "update", "delete", "default"}
+}
+
 func DefaultTimeout(tx time.Duration) *time.Duration {
 	return &tx
 }
@@ -43,9 +47,8 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 			log.Printf("\n***\n rawT %s", spew.Sdump(tv))
 			for mk, mv := range tv {
 				log.Printf("\n$$$$ inner kv: %s // %s", mk, mv.(string))
-				keys := []string{"create", "read", "update", "delete", "default"}
 				var found bool
-				for _, key := range keys {
+				for _, key := range timeKeys() {
 					if mk == key {
 						found = true
 						break
@@ -160,8 +163,7 @@ func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
 		m["default"] = t.Default.Nanoseconds()
 		// for any key above that is nil, if default is specified, we need to
 		// populate it with the default
-		keys := []string{"create", "update", "read", "delete"}
-		for _, k := range keys {
+		for _, k := range timeKeys() {
 			if _, ok := m[k]; !ok {
 				m[k] = t.Default.Nanoseconds()
 			}

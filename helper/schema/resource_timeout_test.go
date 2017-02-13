@@ -107,25 +107,25 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 	// 	Default: DefaultTimeout(7 * time.Minute),
 	// }
 
-	e1 := map[string]interface{}{
-		"create": int64(600000000000),
-		"update": int64(300000000000),
-	}
+	// e1 := map[string]interface{}{
+	// 	"create": int64(600000000000),
+	// 	"update": int64(300000000000),
+	// }
 
-	e2 := map[string]interface{}{
-		"create":  int64(600000000000),
-		"update":  int64(420000000000),
-		"read":    int64(420000000000),
-		"delete":  int64(420000000000),
-		"default": int64(420000000000),
-	}
+	// e2 := map[string]interface{}{
+	// 	"create":  int64(600000000000),
+	// 	"update":  int64(420000000000),
+	// 	"read":    int64(420000000000),
+	// 	"delete":  int64(420000000000),
+	// 	"default": int64(420000000000),
+	// }
 
-	expected := map[string]interface{}{
-		TimeoutKey: e1,
-	}
-	expected2 := map[string]interface{}{
-		TimeoutKey: e2,
-	}
+	// expected := map[string]interface{}{
+	// 	TimeoutKey: e1,
+	// }
+	// expected2 := map[string]interface{}{
+	// 	TimeoutKey: e2,
+	// }
 
 	cases := []struct {
 		Timeout   *ResourceTimeout
@@ -137,14 +137,14 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 		{
 			Timeout:   timeoutForValues(10, 0, 5, 0, 0),
 			State:     &terraform.InstanceDiff{},
-			Expected:  expected,
+			Expected:  map[string]interface{}{TimeoutKey: expectedForValues(10, 0, 5, 0, 0)},
 			ShouldErr: false,
 		},
 		// Two fields, one is Default
 		{
 			Timeout:   timeoutForValues(10, 0, 0, 0, 7),
 			State:     &terraform.InstanceDiff{},
-			Expected:  expected2,
+			Expected:  map[string]interface{}{TimeoutKey: expectedForValues(10, 0, 0, 0, 7)},
 			ShouldErr: false,
 		},
 		// No fields
@@ -192,4 +192,34 @@ func timeoutForValues(create, read, update, del, def int) *ResourceTimeout {
 	}
 
 	return &rt
+}
+
+func expectedForValues(create, read, update, del, def int) map[string]interface{} {
+	ex := make(map[string]interface{})
+
+	if create != 0 {
+		ex["create"] = DefaultTimeout(time.Duration(create) * time.Minute).Nanoseconds()
+	}
+	if read != 0 {
+		ex["read"] = DefaultTimeout(time.Duration(read) * time.Minute).Nanoseconds()
+	}
+	if update != 0 {
+		ex["update"] = DefaultTimeout(time.Duration(update) * time.Minute).Nanoseconds()
+	}
+	if del != 0 {
+		ex["delete"] = DefaultTimeout(time.Duration(del) * time.Minute).Nanoseconds()
+	}
+
+	if def != 0 {
+		defNano := DefaultTimeout(time.Duration(def) * time.Minute).Nanoseconds()
+		ex["default"] = defNano
+
+		for _, k := range timeKeys() {
+			if _, ok := ex[k]; !ok {
+				ex[k] = defNano
+			}
+		}
+	}
+
+	return ex
 }

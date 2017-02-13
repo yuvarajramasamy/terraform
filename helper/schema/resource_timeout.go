@@ -144,6 +144,8 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 // MetaEncode and MetaDecode are analogous to the Go stdlib JSONEncoder
 // interface: they encode/decode a timeouts struct from an instance diff, which is
 // where the timeout data is stored after a diff to pass into Apply.
+//
+// TODO: when should this error?
 func (t *ResourceTimeout) MetaEncode(id *terraform.InstanceDiff) error {
 	m := make(map[string]interface{})
 

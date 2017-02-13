@@ -43,8 +43,6 @@ func TestResourceTimeout_ConfigDecode_badkey(t *testing.T) {
 		log.Println("Expected bad timeout key")
 		t.Fatalf("err: %s", err)
 	}
-
-	log.Printf("\n***\nWhat is timeout: %s", spew.Sdump(timeout))
 }
 
 func TestResourceTimeout_ConfigDecode(t *testing.T) {
@@ -84,7 +82,6 @@ func TestResourceTimeout_ConfigDecode(t *testing.T) {
 		Update: DefaultTimeout(1 * time.Minute),
 	}
 
-	log.Printf("\n***\nWhat is timeout: %s", spew.Sdump(timeout))
 	if !reflect.DeepEqual(timeout, expected) {
 		t.Fatalf("bad timeout decode, expected (%#v), got (%#v)", expected, timeout)
 	}
@@ -92,9 +89,10 @@ func TestResourceTimeout_ConfigDecode(t *testing.T) {
 
 func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 	cases := []struct {
-		Timeout   *ResourceTimeout
-		State     *terraform.InstanceDiff
-		Expected  map[string]interface{}
+		Timeout  *ResourceTimeout
+		State    *terraform.InstanceDiff
+		Expected map[string]interface{}
+		// Not immediately clear when an error would hit
 		ShouldErr bool
 	}{
 		// Two fields
@@ -111,6 +109,7 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 			Expected:  map[string]interface{}{TimeoutKey: expectedForValues(10, 0, 0, 0, 7)},
 			ShouldErr: false,
 		},
+		// All fields
 		{
 			Timeout:   timeoutForValues(10, 3, 4, 1, 7),
 			State:     &terraform.InstanceDiff{},

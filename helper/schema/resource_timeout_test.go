@@ -91,42 +91,6 @@ func TestResourceTimeout_ConfigDecode(t *testing.T) {
 }
 
 func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
-	// dr := &Resource{
-	// 	Timeouts: &ResourceTimeout{
-	// 		Create: DefaultTimeout(10 * time.Minute),
-	// 		Update: DefaultTimeout(5 * time.Minute),
-	// 	},
-	// }
-	// rt := &ResourceTimeout{
-	// 	Create: DefaultTimeout(10 * time.Minute),
-	// 	Update: DefaultTimeout(5 * time.Minute),
-	// }
-
-	// rt2 := &ResourceTimeout{
-	// 	Create:  DefaultTimeout(10 * time.Minute),
-	// 	Default: DefaultTimeout(7 * time.Minute),
-	// }
-
-	// e1 := map[string]interface{}{
-	// 	"create": int64(600000000000),
-	// 	"update": int64(300000000000),
-	// }
-
-	// e2 := map[string]interface{}{
-	// 	"create":  int64(600000000000),
-	// 	"update":  int64(420000000000),
-	// 	"read":    int64(420000000000),
-	// 	"delete":  int64(420000000000),
-	// 	"default": int64(420000000000),
-	// }
-
-	// expected := map[string]interface{}{
-	// 	TimeoutKey: e1,
-	// }
-	// expected2 := map[string]interface{}{
-	// 	TimeoutKey: e2,
-	// }
-
 	cases := []struct {
 		Timeout   *ResourceTimeout
 		State     *terraform.InstanceDiff
@@ -145,6 +109,12 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 			Timeout:   timeoutForValues(10, 0, 0, 0, 7),
 			State:     &terraform.InstanceDiff{},
 			Expected:  map[string]interface{}{TimeoutKey: expectedForValues(10, 0, 0, 0, 7)},
+			ShouldErr: false,
+		},
+		{
+			Timeout:   timeoutForValues(10, 3, 4, 1, 7),
+			State:     &terraform.InstanceDiff{},
+			Expected:  map[string]interface{}{TimeoutKey: expectedForValues(10, 3, 4, 1, 7)},
 			ShouldErr: false,
 		},
 		// No fields

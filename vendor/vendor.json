@@ -2985,6 +2985,12 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
 			"revisionTime": "2016-09-28T15:37:09Z"
+		},
+		{
+			"checksumSHA1": "6IBfhEbb1J5jqA/M9Qx1uYbxzrM=",
+			"path": "k8s.io/apimachinery/pkg/apis/meta/v1",
+			"revision": "482c04a1de79e88890b5d53d93eb465bc2e746c9",
+			"revisionTime": "2017-02-13T12:35:56Z"
 		}
 	],
 	"rootPath": "github.com/hashicorp/terraform"

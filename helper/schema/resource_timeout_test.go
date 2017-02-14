@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -123,7 +122,7 @@ func TestResourceTimeout_MetaEncode_basic(t *testing.T) {
 	for _, c := range cases {
 		state := &terraform.InstanceDiff{}
 		err := c.Timeout.MetaEncode(state)
-		log.Printf("\n@@@\npost case meta thing: %s\n@@@\n", spew.Sdump(state))
+		// log.Printf("\n@@@\npost case meta thing: %s\n@@@\n", spew.Sdump(state))
 		if err != nil && !c.ShouldErr {
 			t.Fatalf("Error, expected:\n%#v\n got:\n%#v\n", c.Expected, state.Meta)
 		}
@@ -172,15 +171,15 @@ func TestResourceTimeout_MetaDecode_basic(t *testing.T) {
 	for _, c := range cases {
 		rt := &ResourceTimeout{}
 		err := rt.MetaDecode(c.State)
-		log.Printf("\n@@@\npost case meta thing: %s\n@@@\n", spew.Sdump(c.State))
+		// log.Printf("\n@@@\npost case meta thing: %s\n@@@\n", spew.Sdump(c.State))
 		if err != nil && !c.ShouldErr {
-			t.Fatalf("Error, expected:\n%#v\n got:\n%#v\n", c.Expected, c.State.Meta)
+			t.Fatalf("Error, expected:\n%#v\n got:\n%#v\n", c.Expected, rt)
 		}
 
 		// should maybe just compare [TimeoutKey] but for now we're assuming only
 		// that in Meta
-		if !reflect.DeepEqual(c.State.Meta, c.Expected) {
-			t.Fatalf("Encode not equal, expected:\n%#v\n\ngot:\n%#v\n", c.Expected, c.State.Meta)
+		if !reflect.DeepEqual(rt, c.Expected) {
+			t.Fatalf("Encode not equal, expected:\n%#v\n\ngot:\n%#v\n", c.Expected, rt)
 		}
 	}
 }

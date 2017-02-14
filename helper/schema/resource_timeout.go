@@ -5,12 +5,19 @@ import (
 	"log"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/mitchellh/copystructure"
 )
 
 const TimeoutKey = "e2bfb730-ecaa-11e6-8f88-34363bc7c4c0"
+
+const (
+	rtCreate  = "create"
+	rtRead    = "read"
+	rtUpdate  = "update"
+	rtDelete  = "delete"
+	rtDefault = "default"
+)
 
 func timeKeys() []string {
 	return []string{"create", "read", "update", "delete", "default"}
@@ -28,8 +35,8 @@ type ResourceTimeout struct {
 // validates, parses the timeouts into `t`
 func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig) error {
 
-	log.Printf("\n@@@\nResource timeouts: %s", spew.Sdump(s.Timeouts))
-	log.Printf("\n@@@\nConfig timeouts: %s", spew.Sdump(c.Config["timeout"]))
+	// log.Printf("\n@@@\nResource timeouts: %s", spew.Sdump(s.Timeouts))
+	// log.Printf("\n@@@\nConfig timeouts: %s", spew.Sdump(c.Config["timeout"]))
 
 	if s.Timeouts != nil {
 		raw, cerr := copystructure.Copy(s.Timeouts)
@@ -39,14 +46,14 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 		*t = *raw.(*ResourceTimeout)
 	}
 
-	log.Printf("what is T now: %s", spew.Sdump(t))
+	// log.Printf("what is T now: %s", spew.Sdump(t))
 
 	if v, ok := c.Config["timeout"]; ok {
 		raw := v.([]map[string]interface{})
 		for _, tv := range raw {
-			log.Printf("\n***\n rawT %s", spew.Sdump(tv))
+			// log.Printf("\n***\n rawT %s", spew.Sdump(tv))
 			for mk, mv := range tv {
-				log.Printf("\n$$$$ inner kv: %s // %s", mk, mv.(string))
+				// log.Printf("\n$$$$ inner kv: %s // %s", mk, mv.(string))
 				var found bool
 				for _, key := range timeKeys() {
 					if mk == key {
@@ -55,21 +62,17 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					}
 				}
 
-				if found {
-					log.Printf("\n*** found %s", mk)
-				}
-
 				if !found {
 					return fmt.Errorf("Unsupported timeout key found (%s)", mk)
 				}
 
-				log.Printf("\n***MK: %s\n***t: %#v", mk, t)
+				// log.Printf("\n***MK: %s\n***t: %#v", mk, t)
 
 				if mk == "create" {
 					if t.Create == nil {
 						return fmt.Errorf("Timeout (%s) is not supported", mk)
 					} else {
-						log.Printf("\n***\nOverwrote (%s)", mk)
+						// log.Printf("\n***\nOverwrote (%s)", mk)
 						rt, err := time.ParseDuration(mv.(string))
 						if err != nil {
 							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
@@ -83,7 +86,7 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					if t.Read == nil {
 						return fmt.Errorf("Timeout (%s) is not supported", mk)
 					} else {
-						log.Printf("\n***\nOverwrote (%s)", mk)
+						// log.Printf("\n***\nOverwrote (%s)", mk)
 						rt, err := time.ParseDuration(mv.(string))
 						if err != nil {
 							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
@@ -97,7 +100,7 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					if t.Update == nil {
 						return fmt.Errorf("Timeout (%s) is not supported", mk)
 					} else {
-						log.Printf("\n***\nOverwrote (%s)", mk)
+						// log.Printf("\n***\nOverwrote (%s)", mk)
 						rt, err := time.ParseDuration(mv.(string))
 						if err != nil {
 							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
@@ -111,7 +114,7 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					if t.Delete == nil {
 						return fmt.Errorf("Timeout (%s) is not supported", mk)
 					} else {
-						log.Printf("\n***\nOverwrote (%s)", mk)
+						// log.Printf("\n***\nOverwrote (%s)", mk)
 						rt, err := time.ParseDuration(mv.(string))
 						if err != nil {
 							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
@@ -125,7 +128,7 @@ func (t *ResourceTimeout) ConfigDecode(s *Resource, c *terraform.ResourceConfig)
 					if t.Default == nil {
 						return fmt.Errorf("Timeout (%s) is not supported", mk)
 					} else {
-						log.Printf("\n***\nOverwrote (%s)", mk)
+						// log.Printf("\n***\nOverwrote (%s)", mk)
 						rt, err := time.ParseDuration(mv.(string))
 						if err != nil {
 							return fmt.Errorf("Error parsing Timeout for (%s): %s", mk, err)
@@ -189,12 +192,28 @@ func (t *ResourceTimeout) MetaDecode(id *terraform.InstanceDiff) error {
 		return nil
 	}
 
-	times, ok := id.Meta[TimeoutKey]
+	tv, ok := id.Meta[TimeoutKey]
 	if !ok {
 		return nil
 	}
 
-	log.Printf("\n@@@\nDEBUG times:\n%s\n@@@\n", spew.Sdump(times))
+	times := tv.(map[string]interface{})
+
+	if v, ok := times[rtCreate]; ok {
+		t.Create = DefaultTimeout(time.Duration(v.(int64)))
+	}
+	if v, ok := times[rtRead]; ok {
+		t.Read = DefaultTimeout(time.Duration(v.(int64)))
+	}
+	if v, ok := times[rtUpdate]; ok {
+		t.Update = DefaultTimeout(time.Duration(v.(int64)))
+	}
+	if v, ok := times[rtDelete]; ok {
+		t.Delete = DefaultTimeout(time.Duration(v.(int64)))
+	}
+	if v, ok := times[rtDefault]; ok {
+		t.Default = DefaultTimeout(time.Duration(v.(int64)))
+	}
 
 	return nil
 }

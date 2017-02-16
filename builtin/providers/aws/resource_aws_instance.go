@@ -63,7 +63,6 @@ func resourceAwsInstance() *schema.Resource {
 			"instance_type": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 
 			"key_name": {
@@ -600,6 +599,19 @@ func resourceAwsInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 		_, err := conn.ModifyInstanceAttribute(&ec2.ModifyInstanceAttributeInput{
 			InstanceId: aws.String(d.Id()),
 			Groups:     groups,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("instance_type") {
+		log.Printf("[INFO] Modifying instance type %s", d.Id())
+		_, err := conn.ModifyInstanceAttribute(&ec2.ModifyInstanceAttributeInput{
+			InstanceId: aws.String(d.Id()),
+			InstanceType: &ec2.AttributeValue{
+				Value: aws.String(d.Get("instance_type").(string)),
+			},
 		})
 		if err != nil {
 			return err
